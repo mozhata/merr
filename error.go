@@ -73,12 +73,16 @@ func WrapErr(err error) *MErr {
 	return wrapErr(err, http.StatusInternalServerError)
 }
 
+// maintain rawErr and update Message if fmtAndArgs is not empty
 func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	msg := BuildErrMsg(fmtAndArgs...)
 	if err == nil {
 		err = errors.New(msg)
 	}
 	if e, ok := err.(*MErr); ok {
+		if msg != "" {
+			e.Message = msg
+		}
 		return e
 	}
 
