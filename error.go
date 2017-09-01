@@ -74,12 +74,10 @@ func WrapErr(err error) *MErr {
 }
 
 // maintain rawErr and update Message if fmtAndArgs is not empty
+// notice: the returned value is used as error, so, should not return nil
 func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	msg := BuildErrMsg(fmtAndArgs...)
 	if err == nil {
-		if msg == "" {
-			return nil
-		}
 		err = errors.New(msg)
 	}
 	if e, ok := err.(*MErr); ok {
