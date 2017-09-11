@@ -10,8 +10,8 @@ import (
 
 // MErr basic error class
 type MErr struct {
-	StatusCode int    `json:"code"`
-	Message    string `json:"msg"`
+	Message    string
+	StatusCode int
 	rawErr     error
 	stackPC    []uintptr
 }
@@ -45,11 +45,11 @@ func (e MErr) CallStack() string {
 }
 
 func (e *MErr) Error() string {
-	return fmt.Sprintf("%v: %v", e.StatusCode, e.Message)
+	return e.Message
 }
 
-// NotFoundError use http.StatusNotFound to express not found err
-func NotFoundError(err error, fmtAndArgs ...interface{}) error {
+// NotFoundErr use http.StatusNotFound to express not found err
+func NotFoundErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusNotFound, fmtAndArgs...)
 }
 
@@ -58,19 +58,23 @@ func InvalidErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusBadRequest, fmtAndArgs...)
 }
 
-// ForbiddenError use http.StatusForbidden to express permission deny err
-func ForbiddenError(err error, fmtAndArgs ...interface{}) error {
+// ForbiddenErr use http.StatusForbidden to express permission deny err
+func ForbiddenErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusForbidden, fmtAndArgs...)
 }
 
-// InternalError use http.StatusInternalServerError to express internal server err
-func InternalError(err error, fmtAndArgs ...interface{}) error {
+// InternalErr use http.StatusInternalServerError to express internal server err
+func InternalErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
 }
 
-// WrapErr equal to InternalError(err)
-func WrapErr(err error) *MErr {
-	return wrapErr(err, http.StatusInternalServerError)
+// WrapErr equal to InternalErr(err)
+func WrapErr(err error, fmtAndArgs ...interface{}) *MErr {
+	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
+}
+
+func WrapErrWithCode(err error, code int, fmtAndArgs ...interface{}) *MErr {
+	return wrapErr(err, code, fmtAndArgs...)
 }
 
 // maintain rawErr and update Message if fmtAndArgs is not empty
@@ -88,6 +92,7 @@ func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	}
 
 	pcs := make([]uintptr, 32)
+	// skip the first 3 invocations
 	count := runtime.Callers(3, pcs)
 	e := &MErr{
 		StatusCode: code,
