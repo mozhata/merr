@@ -16,6 +16,10 @@ type MErr struct {
 	stackPC    []uintptr
 }
 
+func (e *MErr) Error() string {
+	return e.Message
+}
+
 // RawErr the origin err
 func (e MErr) RawErr() error {
 	return e.rawErr
@@ -44,10 +48,6 @@ func (e MErr) CallStack() string {
 	return result
 }
 
-func (e *MErr) Error() string {
-	return e.Message
-}
-
 // NotFoundErr use http.StatusNotFound to express not found err
 func NotFoundErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusNotFound, fmtAndArgs...)
@@ -69,10 +69,13 @@ func InternalErr(err error, fmtAndArgs ...interface{}) error {
 }
 
 // WrapErr equal to InternalErr(err)
+// notice: be careful, the returned value is *MErr, not error
 func WrapErr(err error, fmtAndArgs ...interface{}) *MErr {
 	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
 }
 
+// WrapErrWithCode update StatusCode and Message field.
+// notice: be careful, the returned value is *MErr, not error
 func WrapErrWithCode(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	return wrapErr(err, code, fmtAndArgs...)
 }
@@ -80,13 +83,16 @@ func WrapErrWithCode(err error, code int, fmtAndArgs ...interface{}) *MErr {
 // maintain rawErr and update Message if fmtAndArgs is not empty
 // notice: the returned value is used as error, so, should not return nil
 func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
-	msg := BuildErrMsg(fmtAndArgs...)
+	msg := fmtErrMsg(fmtAndArgs...)
 	if err == nil {
 		err = errors.New(msg)
 	}
 	if e, ok := err.(*MErr); ok {
 		if msg != "" {
 			e.Message = msg
+		}
+		if code != 0 {
+			e.StatusCode = code
 		}
 		return e
 	}
@@ -104,4 +110,20 @@ func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 		e.Message = err.Error()
 	}
 	return e
+}
+
+// fmtErrMsg used to format error message
+func fmtErrMsg(msgs ...interface{}) string {
+	if len(msgs) > 1 {
+		return fmt.Sprintf(msgs[0].(string), msgs[1:]...)
+	}
+	if len(msgs) == 1 {
+		if v, ok := msgs[0].(string); ok {
+			return v
+		}
+		if v, ok := msgs[0].(error); ok {
+			return v.Error()
+		}
+	}
+	return ""
 }
