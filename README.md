@@ -1,6 +1,8 @@
 # merr
 wrap golang error to make it easy to debug
 
+
+
 # usage
 
 ```
@@ -15,25 +17,13 @@ import (
 
 func main() {
 	var err error
-	err = merr.WrapErr(nil, "this is an error")
+	err = warpper()
 	logMerr(err)
 }
 
-func warpperD() error {
+func warpper() error {
 	err := errors.New("origin err")
-	return merr.WrapErr(err)
-}
-
-func wrapperA(err error) error {
-	return merr.WrapErr(err, "wrap err by wrapper A")
-}
-
-func warpperB(err error) error {
-	return merr.WrapErrWithCode(err, 123, "wrap err by wrapper B")
-}
-
-func warpperC(err error) error {
-	return merr.WrapErr(err)
+	return merr.WrapErr(err, "new err")
 }
 
 func logMerr(err error) {
@@ -47,58 +37,15 @@ func logMerr(err error) {
 }
 
 ```
+
 output:
-```
-E500: err: this is an error
-raw err: this is an error
-call stack: main.main
-	practice/go/example/main.go:12
-runtime.main
-	runtime/proc.go:183
-runtime.goexit
-	runtime/asm_amd64.s:2086
 
 ```
-func main() {
-	var err error
-	err = merr.WrapErr(nil, "this is an error")
-	err = wrapperA(err)
-	logMerr(err)
-}
-
-
-```
-
-```
-output:
-```
-E500: err: wrap err by wrapper A
-raw err: this is an error
-call stack: main.main
-	practice/go/example/main.go:12
-runtime.main
-	runtime/proc.go:183
-runtime.goexit
-	runtime/asm_amd64.s:2086
-
-```
-
-```
-func main() {
-	var err error
-	err = merr.WrapErr(nil, "this is an error")
-	err = wrapperA(err)
-	err = warpperB(err)
-	err = warpperC(err)
-	logMerr(err)
-}
-
-```
-output: 
-```
-E500: err: wrap err by wrapper B
-raw err: this is an error
-call stack: main.main
+E500: err: new err
+raw err: origin err
+call stack: main.warpper
+	practice/go/example/main.go:18
+main.main
 	practice/go/example/main.go:12
 runtime.main
 	runtime/proc.go:183

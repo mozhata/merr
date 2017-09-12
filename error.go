@@ -48,22 +48,26 @@ func (e MErr) CallStack() string {
 	return result
 }
 
-// NotFoundErr use http.StatusNotFound to express not found err
+// NotFoundErr use http.StatusNotFound as StatusCode to express not found err
+// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
 func NotFoundErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusNotFound, fmtAndArgs...)
 }
 
-// InvalidErr use http.StatusBadRequest to express bad params err
+// InvalidErr use http.StatusBadRequest as StatusCode to express bad params err
+// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
 func InvalidErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusBadRequest, fmtAndArgs...)
 }
 
-// ForbiddenErr use http.StatusForbidden to express permission deny err
+// ForbiddenErr use http.StatusForbidden as StatusCode to express permission deny err
+// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
 func ForbiddenErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusForbidden, fmtAndArgs...)
 }
 
-// InternalErr use http.StatusInternalServerError to express internal server err
+// InternalErr use http.StatusInternalServerError as StatusCode to express internal server err
+// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
 func InternalErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
 }
@@ -74,13 +78,15 @@ func WrapErr(err error, fmtAndArgs ...interface{}) *MErr {
 	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
 }
 
-// WrapErrWithCode update StatusCode and Message field.
+// WrapErrWithCode if code is not 0, update StatusCode to code,
+// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
 // notice: be careful, the returned value is *MErr, not error
 func WrapErrWithCode(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	return wrapErr(err, code, fmtAndArgs...)
 }
 
 // maintain rawErr and update Message if fmtAndArgs is not empty
+// update StatusCode to code if code is not 0
 // notice: the returned value is used as error, so, should not return nil
 func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	msg := fmtErrMsg(fmtAndArgs...)
