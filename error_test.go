@@ -2,7 +2,6 @@ package merr
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -80,7 +79,6 @@ func TestMErr(t *testing.T) {
 			err = wrapErr(err, codev3)
 			convey.So(err.StatusCode, convey.ShouldEqual, codev2)
 			convey.So(err.Error(), convey.ShouldEqual, msgv2)
-			fmt.Println(err.CallStack())
 		})
 	})
 	convey.Convey("test WrapErr", t, func() {
