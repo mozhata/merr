@@ -10,14 +10,14 @@ import (
 
 // MErr basic error class
 type MErr struct {
-	Message    string
-	StatusCode int
-	rawErr     error
-	stackPC    []uintptr
+	Msg     string
+	Code    int
+	rawErr  error
+	stackPC []uintptr
 }
 
 func (e *MErr) Error() string {
-	return e.Message
+	return e.Msg
 }
 
 // RawErr the origin err
@@ -48,26 +48,26 @@ func (e MErr) CallStack() string {
 	return result
 }
 
-// NotFoundErr use http.StatusNotFound as StatusCode to express not found err
-// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
+// NotFoundErr use http.StatusNotFound as Code to express not found err
+// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
 func NotFoundErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusNotFound, fmtAndArgs...)
 }
 
-// InvalidErr use http.StatusBadRequest as StatusCode to express bad params err
-// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
+// InvalidErr use http.StatusBadRequest as Code to express bad params err
+// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
 func InvalidErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusBadRequest, fmtAndArgs...)
 }
 
-// ForbiddenErr use http.StatusForbidden as StatusCode to express permission deny err
-// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
+// ForbiddenErr use http.StatusForbidden as Code to express permission deny err
+// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
 func ForbiddenErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusForbidden, fmtAndArgs...)
 }
 
-// InternalErr use http.StatusInternalServerError as StatusCode to express internal server err
-// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
+// InternalErr use http.StatusInternalServerError as Code to express internal server err
+// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
 func InternalErr(err error, fmtAndArgs ...interface{}) error {
 	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
 }
@@ -78,15 +78,15 @@ func WrapErr(err error, fmtAndArgs ...interface{}) *MErr {
 	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
 }
 
-// WrapErrWithCode if code is not 0, update StatusCode to code,
-// if fmtAndArgs is not nil, update the Message according to fmtAndArgs
+// WrapErrWithCode if code is not 0, update Code to code,
+// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
 // notice: be careful, the returned value is *MErr, not error
 func WrapErrWithCode(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	return wrapErr(err, code, fmtAndArgs...)
 }
 
-// maintain rawErr and update Message if fmtAndArgs is not empty
-// update StatusCode to code if code is not 0
+// maintain rawErr and update Msg if fmtAndArgs is not empty
+// update Code to code if code is not 0
 // notice: the returned value is used as error, so, should not return nil
 func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	msg := fmtErrMsg(fmtAndArgs...)
@@ -95,10 +95,10 @@ func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	}
 	if e, ok := err.(*MErr); ok {
 		if msg != "" {
-			e.Message = msg
+			e.Msg = msg
 		}
 		if code != 0 {
-			e.StatusCode = code
+			e.Code = code
 		}
 		return e
 	}
@@ -107,13 +107,13 @@ func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	// skip the first 3 invocations
 	count := runtime.Callers(3, pcs)
 	e := &MErr{
-		StatusCode: code,
-		Message:    msg,
-		rawErr:     err,
-		stackPC:    pcs[:count],
+		Code:    code,
+		Msg:     msg,
+		rawErr:  err,
+		stackPC: pcs[:count],
 	}
-	if e.Message == "" {
-		e.Message = err.Error()
+	if e.Msg == "" {
+		e.Msg = err.Error()
 	}
 	return e
 }
