@@ -29,7 +29,7 @@ func warpper() error {
 func logMerr(err error) {
 	e := merr.WrapErr(err)
 	fmt.Printf("E%d: err: %s\nraw err: %s\ncall stack: %s\n",
-		e.StatusCode,
+		e.Code,
 		e.Error(),
 		e.RawErr(),
 		e.CallStack(),
