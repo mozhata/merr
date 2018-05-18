@@ -45,20 +45,20 @@ func TestMErr(t *testing.T) {
 			msgs := "err is nil"
 			e := wrapErr(nil, originCode, msgs)
 			convey.So(e.Error(), convey.ShouldEqual, msgs)
-			convey.So(e.StatusCode, convey.ShouldEqual, originCode)
+			convey.So(e.Code, convey.ShouldEqual, originCode)
 			convey.So(strings.Contains(e.CallStack(), "github.com/mozhata/merr/error_test.go"), convey.ShouldBeTrue)
 		})
 		convey.Convey("err not nil, masgs is emtpy", func() {
 			e := wrapErr(originErr, originCode)
 			convey.So(e.Error(), convey.ShouldEqual, originErr.Error())
-			convey.So(e.StatusCode, convey.ShouldEqual, originCode)
+			convey.So(e.Code, convey.ShouldEqual, originCode)
 		})
 		convey.Convey("err and masgs not emtpy", func() {
 			msg := "msg"
 			e := wrapErr(originErr, originCode, msg)
 			convey.So(e.Error(), convey.ShouldEqual, msg)
 			convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-			convey.So(e.StatusCode, convey.ShouldEqual, originCode)
+			convey.So(e.Code, convey.ShouldEqual, originCode)
 		})
 		convey.Convey("wrap Merr", func() {
 			msgv1 := "msg v1"
@@ -69,54 +69,54 @@ func TestMErr(t *testing.T) {
 			err := wrapErr(originErr, originCode, msgv1)
 			convey.So(err.Error(), convey.ShouldEqual, msgv1)
 			convey.So(err.RawErr(), convey.ShouldEqual, originErr)
-			convey.So(err.StatusCode, convey.ShouldEqual, originCode)
+			convey.So(err.Code, convey.ShouldEqual, originCode)
 
 			err = wrapErr(err, codev2, msgv2)
 			convey.So(err.Error(), convey.ShouldEqual, msgv2)
 			convey.So(err.RawErr(), convey.ShouldEqual, originErr)
-			convey.So(err.StatusCode, convey.ShouldEqual, codev2)
+			convey.So(err.Code, convey.ShouldEqual, codev2)
 
 			err = wrapErr(err, codev3)
-			convey.So(err.StatusCode, convey.ShouldEqual, codev2)
+			convey.So(err.Code, convey.ShouldEqual, codev2)
 			convey.So(err.Error(), convey.ShouldEqual, msgv2)
 		})
 	})
 	convey.Convey("test WrapErr", t, func() {
 		e := WrapErr(originErr)
 		convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-		convey.So(e.StatusCode, convey.ShouldEqual, http.StatusInternalServerError)
+		convey.So(e.Code, convey.ShouldEqual, http.StatusInternalServerError)
 	})
 	convey.Convey("test WrapErrWithCode", t, func() {
 		e := WrapErrWithCode(originErr, originCode)
 		convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-		convey.So(e.StatusCode, convey.ShouldEqual, originCode)
+		convey.So(e.Code, convey.ShouldEqual, originCode)
 	})
 	convey.Convey("test InternalErr", t, func() {
 		err := InternalErr(originErr)
 		e, ok := err.(*MErr)
 		convey.So(ok, convey.ShouldBeTrue)
 		convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-		convey.So(e.StatusCode, convey.ShouldEqual, http.StatusInternalServerError)
+		convey.So(e.Code, convey.ShouldEqual, http.StatusInternalServerError)
 	})
 	convey.Convey("test ForbiddenErr", t, func() {
 		err := ForbiddenErr(originErr)
 		e, ok := err.(*MErr)
 		convey.So(ok, convey.ShouldBeTrue)
 		convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-		convey.So(e.StatusCode, convey.ShouldEqual, http.StatusForbidden)
+		convey.So(e.Code, convey.ShouldEqual, http.StatusForbidden)
 	})
 	convey.Convey("test InvalidErr", t, func() {
 		err := InvalidErr(originErr)
 		e, ok := err.(*MErr)
 		convey.So(ok, convey.ShouldBeTrue)
 		convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-		convey.So(e.StatusCode, convey.ShouldEqual, http.StatusBadRequest)
+		convey.So(e.Code, convey.ShouldEqual, http.StatusBadRequest)
 	})
 	convey.Convey("test NotFoundErr", t, func() {
 		err := NotFoundErr(originErr)
 		e, ok := err.(*MErr)
 		convey.So(ok, convey.ShouldBeTrue)
 		convey.So(e.RawErr(), convey.ShouldEqual, originErr)
-		convey.So(e.StatusCode, convey.ShouldEqual, http.StatusNotFound)
+		convey.So(e.Code, convey.ShouldEqual, http.StatusNotFound)
 	})
 }
