@@ -3,17 +3,16 @@ package merr
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"runtime"
 	"strings"
 )
 
 // MErr basic error class
 type MErr struct {
-	Msg     string
-	Code    int
-	rawErr  error
-	stackPC []uintptr
+	Msg     string    // 对应Error()
+	Code    int       // 错误码
+	rawErr  error     // 初始错误信息, 不会被更新
+	stackPC []uintptr // 初始错误的调用栈
 }
 
 func (e *MErr) Error() string {
@@ -36,6 +35,7 @@ func (e MErr) CallStack() string {
 	)
 	for {
 		f, more = frames.Next()
+		// TODO: make configable
 		if index = strings.Index(f.File, "src"); index != -1 {
 			// trim GOPATH or GOROOT prifix
 			f.File = string(f.File[index+4:])
@@ -48,47 +48,42 @@ func (e MErr) CallStack() string {
 	return result
 }
 
-// NotFoundErr use http.StatusNotFound as Code to express not found err
-// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
-func NotFoundErr(err error, fmtAndArgs ...interface{}) error {
-	return wrapErr(err, http.StatusNotFound, fmtAndArgs...)
+// ErrDetail get detail error info
+func ErrDetail(err error) string {
+	e := Wrap(err, 0)
+	return fmt.Sprintf("E%d: err: %s\nraw err: %s\ncall stack: %s\n",
+		e.Code,
+		e.Error(),
+		e.RawErr(),
+		e.CallStack(),
+	)
 }
 
-// InvalidErr use http.StatusBadRequest as Code to express bad params err
-// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
-func InvalidErr(err error, fmtAndArgs ...interface{}) error {
-	return wrapErr(err, http.StatusBadRequest, fmtAndArgs...)
+// WrapDefaultCode equal to UnKnowErr(err)
+// use Wrap func return *MErr value.
+// notice: be careful, the returned value is *MErr, not error.
+func WrapDefaultCode(err error, fmtAndArgs ...interface{}) *MErr {
+	return Wrap(err, 0, fmtAndArgs...)
 }
 
-// ForbiddenErr use http.StatusForbidden as Code to express permission deny err
-// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
-func ForbiddenErr(err error, fmtAndArgs ...interface{}) error {
-	return wrapErr(err, http.StatusForbidden, fmtAndArgs...)
+// NilOrWrap return nil if err param is nil, otherwise, then Wrap
+// notice: be careful, the returned value is *MErr, not error.
+func NilOrWrap(err error, code int, fmtAndArgs ...interface{}) error {
+	if err == nil {
+		return nil
+	}
+	return Wrap(err, code, fmtAndArgs...)
 }
 
-// InternalErr use http.StatusInternalServerError as Code to express internal server err
-// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
-func InternalErr(err error, fmtAndArgs ...interface{}) error {
-	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
+// Wrap notice: be careful, the returned value is *MErr, not error
+func Wrap(err error, code int, fmtAndArgs ...interface{}) *MErr {
+	return WrapDepth(1, err, code, fmtAndArgs...)
 }
 
-// WrapErr equal to InternalErr(err)
-// notice: be careful, the returned value is *MErr, not error
-func WrapErr(err error, fmtAndArgs ...interface{}) *MErr {
-	return wrapErr(err, http.StatusInternalServerError, fmtAndArgs...)
-}
-
-// WrapErrWithCode if code is not 0, update Code to code,
-// if fmtAndArgs is not nil, update the Msg according to fmtAndArgs
-// notice: be careful, the returned value is *MErr, not error
-func WrapErrWithCode(err error, code int, fmtAndArgs ...interface{}) *MErr {
-	return wrapErr(err, code, fmtAndArgs...)
-}
-
-// maintain rawErr and update Msg if fmtAndArgs is not empty
-// update Code to code if code is not 0
-// notice: the returned value is used as error, so, should not return nil
-func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
+// WrapDepth The argument depth is the number of stack frames to skip before recording in pc,
+// with 0 identifying the caller of WrapDepth.
+// if a wrapper is added to WrapDepth, depth should +1, like Wrap
+func WrapDepth(depth int, err error, code int, fmtAndArgs ...interface{}) *MErr {
 	msg := fmtErrMsg(fmtAndArgs...)
 	if err == nil {
 		err = errors.New(msg)
@@ -104,8 +99,8 @@ func wrapErr(err error, code int, fmtAndArgs ...interface{}) *MErr {
 	}
 
 	pcs := make([]uintptr, 32)
-	// skip the first 3 invocations
-	count := runtime.Callers(3, pcs)
+	// skip some first invocations
+	count := runtime.Callers(2+depth, pcs)
 	e := &MErr{
 		Code:    code,
 		Msg:     msg,
