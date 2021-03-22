@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"strings"
 )
 
 // MErr basic error class
@@ -31,21 +30,41 @@ func (e MErr) CallStack() string {
 		f      runtime.Frame
 		more   bool
 		result string
-		index  int
 	)
 	for {
 		f, more = frames.Next()
-		// TODO: make configable
-		if index = strings.Index(f.File, "src"); index != -1 {
-			// trim GOPATH or GOROOT prifix
-			f.File = string(f.File[index+4:])
-		}
-		result = fmt.Sprintf("%s%s\n\t%s:%d\n", result, f.Function, f.File, f.Line)
+		// filePath := filepath.Base(f.File)
+		filePath := shortenPath(f.File)
+		// strings.I
+		result = fmt.Sprintf("%s%s\n\t%s:%d\n", result, f.Function, filePath, f.Line)
 		if !more {
 			break
 		}
 	}
 	return result
+}
+
+func shortenPath(filePath string) string {
+	if filePath == "" {
+		return ""
+	}
+	var (
+		lastOneIdx int
+		lastTwoIdx int
+	)
+	for i, c := range filePath {
+		if c == '/' {
+			lastTwoIdx = lastOneIdx
+			lastOneIdx = i
+		}
+	}
+	if lastTwoIdx > 0 {
+		lastTwoIdx++
+	}
+	if lastTwoIdx == 0 && filePath[0] == '/' {
+		lastTwoIdx++
+	}
+	return filePath[lastTwoIdx:]
 }
 
 // ErrDetail get detail error info
